@@ -1,29 +1,55 @@
 <script setup>
+import { onMounted, reactive, ref, computed } from "vue";
+import PokemonRender from "@/components/PokemonRender.vue";
+let urlBase = ref(
+  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/"
+);
+let pokemons = reactive(ref());
+let searchPokemonField = ref("");
+
+onMounted(() => {
+  fetch("https://pokeapi.co/api/v2/pokemon?limit=150&offset=0")
+    .then((response) => response.json())
+    .then((response) => (pokemons.value = response.results));
+});
+
+const pokemonsFiltered = computed(() => {
+  if(pokemons.value && searchPokemonField.value){
+    return pokemons.value.filter(pokemon => {
+      if(pokemon.name.includes(searchPokemonField.value)){
+        return pokemon.name
+      }
+    })
+  }
+  return pokemons.value
+})
 </script>
 
 <template>
   <main class="mt-5">
-    <div class="container text-center">
+    <div class="container">
       <div class="row">
         <div class="col-sm-12 col-md-6">
-          <div class="card mb-3" style="max-width: 540px">
-            <div class="row g-0">
-              <div class="col-md-4">
-                <img src="../assets/images/teste.png" class="img-fluid rounded-start" alt="..." />
+          <div class="card">
+            <div class="card-body row">
+              <div class="mb-3">
+                <label for="pokemonSearch" class="form-label"
+                  >Pesquise por nome ou id</label
+                >
+                <input
+                  v-model="searchPokemonField"
+                  type="text"
+                  class="form-control"
+                  id="pokemonSearch"
+                  placeholder="ex: charmander..."
+                />
               </div>
-              <div class="col-md-8">
-                <div class="card-body">
-                  <h5 class="card-title">Charmander</h5>
-                  <p class="card-text">
-                    teste
-                  </p>
-                  <p class="card-text">
-                    <small class="text-body-secondary"
-                      >teste</small
-                    >
-                  </p>
-                </div>
-              </div>
+              <PokemonRender
+                v-for="pokemons in pokemonsFiltered"
+                :key="pokemons.name"
+                :name="pokemons.name"
+                :urlImage="urlBase + pokemons.url.split('/')[6] + '.svg'"
+              />
             </div>
           </div>
         </div>
