@@ -1,28 +1,38 @@
 <script setup>
 import { onMounted, reactive, ref, computed } from "vue";
 import PokemonRender from "@/components/PokemonRender.vue";
+import SelectedPokemonCard from "@/components/SelectedPokemonCard.vue";
 let urlBase = ref(
   "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/"
 );
 let pokemons = reactive(ref());
 let searchPokemonField = ref("");
+let pokemonSelected = reactive(ref());
 
-onMounted(() => {
-  fetch("https://pokeapi.co/api/v2/pokemon?limit=150&offset=0")
+onMounted(async () => {
+  await fetch("https://pokeapi.co/api/v2/pokemon?limit=150&offset=0")
     .then((response) => response.json())
     .then((response) => (pokemons.value = response.results));
 });
 
 const pokemonsFiltered = computed(() => {
-  if(pokemons.value && searchPokemonField.value){
-    return pokemons.value.filter(pokemon => {
-      if(pokemon.name.includes(searchPokemonField.value)){
-        return pokemon.name
+  if (pokemons.value && searchPokemonField.value) {
+    return pokemons.value.filter((pokemon) => {
+      if (pokemon.name.includes(searchPokemonField.value)) {
+        return pokemon.name;
       }
-    })
+    });
   }
-  return pokemons.value
-})
+  return pokemons.value;
+});
+
+const selectedPokemon = async (pokemon) => {
+  await fetch(pokemon.url)
+    .then((response) => response.json())
+    .then((data) => (pokemonSelected.value = data));
+
+  console.log(pokemonSelected.value);
+};
 </script>
 
 <template>
@@ -30,7 +40,7 @@ const pokemonsFiltered = computed(() => {
     <div class="container">
       <div class="row">
         <div class="col-sm-12 col-md-6">
-          <div class="card">
+          <div class="card card-list">
             <div class="card-body row">
               <div class="mb-3">
                 <label for="pokemonSearch" class="form-label"
@@ -49,12 +59,28 @@ const pokemonsFiltered = computed(() => {
                 :key="pokemons.name"
                 :name="pokemons.name"
                 :urlImage="urlBase + pokemons.url.split('/')[6] + '.svg'"
+                @click="selectedPokemon(pokemons)"
               />
             </div>
           </div>
         </div>
-        <div class="col-sm-12 col-md-6">Column</div>
+        <div class="col-sm-12 col-md-6">
+          <SelectedPokemonCard
+            :name="pokemonSelected?.name"
+            :xp="pokemonSelected?.base_experience"
+            :height="pokemonSelected?.height"
+            :image="pokemonSelected?.sprites.other.dream_world.front_default"
+          />
+        </div>
       </div>
     </div>
   </main>
 </template>
+
+<style>
+.card-list {
+  overflow-y: scroll;
+  max-height: 500px;
+  overflow-x: hidden;
+}
+</style>
