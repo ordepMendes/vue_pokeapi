@@ -8,6 +8,7 @@ let urlBase = ref(
 let pokemons = reactive(ref());
 let searchPokemonField = ref("");
 let pokemonSelected = reactive(ref());
+let loading = ref(false);
 
 onMounted(async () => {
   await fetch("https://pokeapi.co/api/v2/pokemon?limit=150&offset=0")
@@ -27,11 +28,13 @@ const pokemonsFiltered = computed(() => {
 });
 
 const selectedPokemon = async (pokemon) => {
+  loading.value = true;
+
   await fetch(pokemon.url)
     .then((response) => response.json())
-    .then((data) => (pokemonSelected.value = data));
-
-  console.log(pokemonSelected.value);
+    .then((data) => (pokemonSelected.value = data))
+    .catch((err) => alert("Aconteceu algum erro! " + err))
+    .finally(() => (loading.value = false));
 };
 </script>
 
@@ -39,6 +42,15 @@ const selectedPokemon = async (pokemon) => {
   <main class="mt-5">
     <div class="container">
       <div class="row">
+        <div class="col-sm-12 col-md-6">
+          <SelectedPokemonCard
+            :name="pokemonSelected?.name"
+            :xp="pokemonSelected?.base_experience"
+            :height="pokemonSelected?.height"
+            :image="pokemonSelected?.sprites.other.dream_world.front_default"
+            :loading="loading"
+          />
+        </div>
         <div class="col-sm-12 col-md-6">
           <div class="card card-list">
             <div class="card-body row">
@@ -63,14 +75,6 @@ const selectedPokemon = async (pokemon) => {
               />
             </div>
           </div>
-        </div>
-        <div class="col-sm-12 col-md-6">
-          <SelectedPokemonCard
-            :name="pokemonSelected?.name"
-            :xp="pokemonSelected?.base_experience"
-            :height="pokemonSelected?.height"
-            :image="pokemonSelected?.sprites.other.dream_world.front_default"
-          />
         </div>
       </div>
     </div>
